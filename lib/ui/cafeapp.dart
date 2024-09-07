@@ -1,28 +1,49 @@
 import 'package:caffeapp/provider/cart.dart';
 import 'package:caffeapp/provider/detail_drink.dart';
+import 'package:caffeapp/provider/order_provider.dart';
 import 'package:caffeapp/provider/shipper.dart';
-import 'package:caffeapp/ui/carttabs..dart';
-import 'package:caffeapp/ui/storetabs.dart';
-import 'package:caffeapp/ui/notifitabs.dart';
+import 'package:caffeapp/provider/shipper_provider.dart';
+import 'package:caffeapp/provider/user_provider.dart';
+import 'package:caffeapp/provider/getData.dart';
+import 'package:caffeapp/ui/admin_screen/admin_function/firebase_Utils.dart';
+import 'package:caffeapp/ui/main_screen/Screen_Carts/carttabs..dart';
+import 'package:caffeapp/ui/main_screen/Screen_Login/signintabs.dart';
+import 'package:caffeapp/ui/main_screen/Sreen_Store/storesingle.dart';
+import 'package:caffeapp/ui/main_screen/Sreen_Store/storetabs.dart';
+import 'package:caffeapp/ui/main_screen/Screen_Notifi/notifitabs.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uni_links/uni_links.dart';
 
 
-import 'bottom_bar_main.dart';
+import '../provider/statusOrder.dart';
+import 'main_screen/Screen_Orther/info_screen.dart';
+import 'main_screen/Screen_Home/bottom_bar_main.dart';
 class cafffeapphome extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (BuildContext context){return getData();}),
+        ChangeNotifierProvider(create: (BuildContext context){return user_provider();}),
         ChangeNotifierProvider(create: (BuildContext context){ return DetailDrinkProvider();}),
         ChangeNotifierProvider(create: (BuildContext context){ return cart();}),
-        ChangeNotifierProvider(create: (BuildContext context ){return shipper();})
+        ChangeNotifierProvider(create: (BuildContext context ){return shipper();}),
+        ChangeNotifierProvider(create: (BuildContext context){return order_provider();}),
+        ChangeNotifierProvider(create: (BuildContext context){return firebase_Utils();}),
+        ChangeNotifierProvider(create: (BuildContext context){return shipper_provider();}),
+        ChangeNotifierProvider(create: (BuildContext context) {return statusOrder();})
       ],
       child: MaterialApp(
+      // home: singinTabs(),
+
         home: caffeapp(currentPage: NavigationPages.home,),
+        //home:storetabs(),
+        // home:caffeapp(currentPage: NavigationPages.bloc,),
         debugShowCheckedModeBanner: false
         ,
       ),
@@ -54,18 +75,29 @@ class _caffeappState extends State<caffeapp> {
 
   @override
   void initState() {
+    // context.watch()<getData>().getList();
+    // context.watch()<getData>().getCuaHangListFromFirestore();
+    //
+    // context.watch()<getData>().getOrders();
+    if(context.read<getData>().listcaffe.isEmpty){
+      context.read<getData>().initStreams();
+    }
     super.initState();
     _currentNavigationIndex = widget.currentPage.index;
 
     _pages = [
       hometabpage()
+
       ,  storetabs()
       ,  carttabs()
-      ,  notifitabs()
+      ,   infor_screen()
       ,
     ];
 
+
+
   }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(child:Scaffold(
@@ -77,12 +109,6 @@ class _caffeappState extends State<caffeapp> {
   }
 
 
-  // final List<Widget> _tab =[
-  //   const hometab(),
-  //   storetabs(),
-  //   carttabs(),
-  //   const notifitabs(),
-  // ];
   Widget buildBody() {
     return Stack(
       children: [
@@ -95,43 +121,64 @@ class _caffeappState extends State<caffeapp> {
         ),
 
 
-        // InkWell(
-        //   onTap: (){
-        //     lst.add("abc");
-        //     print("abc");
-        //   },
-        //   child: Align(
-        //
-        //     alignment: Alignment.bottomCenter,
-        //   child:Container(
-        //     height:300,
-        //     width:300,
-        //     color: Colors.yellow,child: Text("abc"),) ,),
-        // )
+
       ],
     );
   }
 
-  BottomNavigationBar buidBottomBar(){
-    return BottomNavigationBar(iconSize: _iconSize,
-      currentIndex: _currentNavigationIndex,
-      selectedLabelStyle: TextStyle(fontSize: _fontSize, ),
-      unselectedLabelStyle: TextStyle(fontSize: _fontSize, color: Colors.grey),
-      selectedItemColor: colorItem,
-      unselectedItemColor: Colors.grey,
-      backgroundColor: Colors.white,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-      BottomNavigationBarItem(icon: Icon(Icons.home_outlined, color:Colors.black45,),label: "Trang chủ", ),
-      BottomNavigationBarItem(icon: Icon(Icons.store_mall_directory_outlined,color: Colors.black45),label: "Cửa hàng"),
-      BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined, color: Colors.black45,),label: "Sản phẩm"),
-      BottomNavigationBarItem(icon: Icon(Icons.notifications_active_outlined,color: Colors.black45),label: "Thông báo"),
+  CurvedNavigationBar buidBottomBar(){
+    return  CurvedNavigationBar(
+      height: 50,
+    index: _currentNavigationIndex,
+    backgroundColor: Colors.white,
+    color: Colors.orangeAccent,
+    buttonBackgroundColor: Colors.orangeAccent,
+    animationDuration: Duration(milliseconds: 400),
+      items: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.home_outlined, size: 15, color: Colors.white),
+
+            Text("Home", style: TextStyle(fontSize: 10,color: Colors.white)),
+          ],
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.store_mall_directory_outlined, size: 15, color: Colors.white),
+
+            Text("Store", style: TextStyle(fontSize: 10,color: Colors.white)),
+          ],
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.shopping_cart_outlined, size: 15, color: Colors.white),
+
+            Text("Product", style: TextStyle(fontSize: 10,color: Colors.white)),
+          ],
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.menu, size: 15, color: Colors.white),
+
+            Text("Orther", style: TextStyle(fontSize: 10,color: Colors.white)),
+          ],
+        ),
       ],
-      onTap: onTapNavigationBar,);
+
+      onTap: onTapNavigationBar,
+    );
+
   }
   void onTapNavigationBar(int value) {
     switch(NavigationPages.values[value]){
       case NavigationPages.home:
+        _changePages(value);
+        break;
+      case NavigationPages.bloc:
         _changePages(value);
         break;
       case NavigationPages.store:
@@ -141,9 +188,7 @@ class _caffeappState extends State<caffeapp> {
         _changePages(value);
         break;
 
-      case NavigationPages.notifi:
-        _changePages(value);
-        break;
+
 
     }
   }
@@ -153,6 +198,7 @@ class _caffeappState extends State<caffeapp> {
       _currentNavigationIndex = value;
     });
   }
+
 }
 
 
@@ -161,7 +207,8 @@ enum NavigationPages{
   home,
   store,
   carts,
-  notifi,
+  bloc,
+
 }
 
 
@@ -171,21 +218,21 @@ enum NavigationPages{
 
 
 
-class hometab extends StatelessWidget {
-  const hometab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return  SafeArea(child: Scaffold(
-
-
-      body: hometabpage(),
-
-
-    )
-    );
-  }
-}
+// class hometab extends StatelessWidget {
+//   const hometab({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return  SafeArea(child: Scaffold(
+//
+//
+//       body: hometabpage(),
+//
+//
+//     )
+//     );
+//   }
+// }
 
 
 

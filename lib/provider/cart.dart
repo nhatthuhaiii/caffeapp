@@ -11,15 +11,21 @@ class cart extends ChangeNotifier {
 
   addItems(detail a) {
 
-
-      gia =gia + (a.a.gia!)*a.sl;
+    int size = a.size == "S" ? -5: a.size=="M"?0:5;
+    gia =gia + (a.a.gia+size)*a.sl;
     tongadd(a);
     lst.add(a);
     xulilst();
     setFlag();
   }
-  tinhtien(detail x){
-
+  tinhtien(){
+    gia =0;
+    for(var item in lst) {
+      String it = item.size;
+      int size = it == "S" ? -5: it=="M" ? 0 : 5;
+      gia = gia + item.sl * (item.a.gia+size);
+    }
+    return gia;
 
   }
   tongadd(detail i) {
@@ -44,13 +50,21 @@ class cart extends ChangeNotifier {
       }
     }
   }
+  capnhat(detail x){
+    for(var item in lst){
+      if(item.a.ten==x.a.ten && item.size == x.size)
+          item.sl = x.sl;
+    }
+    tinhtien();
+    setFlag();
+  }
 
   xoaIt(detail x) {
     lst.remove(x);
     gia=0;
     tong=0;
     for (detail x in lst) {
-      gia = gia + x.sl * x.a.gia!;
+      gia = gia + x.sl * (x.a.gia);
       tong = tong + x.sl;
     }
     setFlag();
